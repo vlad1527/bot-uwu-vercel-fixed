@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Бот UWU 3.0 — Vercel</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Arial, sans-serif;
+      color: white;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(249,115,22,.35), transparent 28%),
+        radial-gradient(circle at 85% 20%, rgba(59,130,246,.28), transparent 30%),
+        radial-gradient(circle at 50% 90%, rgba(124,58,237,.25), transparent 38%),
+        linear-gradient(135deg,#07111f,#111827 45%,#05070d);
+      overflow-x: hidden;
+    }
+    .arena {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+      background-size: 54px 54px;
+      transform: perspective(700px) rotateX(55deg) translateY(-190px);
+      transform-origin: top;
+      opacity: .45;
+      animation: fieldMove 13s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes fieldMove { to { background-position: 0 108px; } }
+    header, main { position: relative; z-index: 2; }
+    header { text-align:center; padding:42px 18px 18px; }
+    .badge {
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 14px;
+      border-radius:999px;
+      color:#fed7aa;
+      border:1px solid rgba(251,146,60,.35);
+      background:rgba(251,146,60,.12);
+      margin-bottom:18px;
+      font-weight:900;
+    }
+    .dot { width:10px; height:10px; border-radius:50%; background:#22c55e; box-shadow:0 0 14px #22c55e; }
+    h1 { margin:0; font-size:clamp(42px,8vw,90px); letter-spacing:-4px; text-transform:uppercase; text-shadow:0 0 34px rgba(255,140,0,.62); }
+    .subtitle { color:#cbd5e1; font-size:18px; margin-top:8px; }
+    main { width:min(1180px,calc(100% - 32px)); margin:24px auto; padding:20px; border-radius:28px; background:rgba(15,23,42,.75); border:1px solid rgba(255,255,255,.14); box-shadow:0 24px 80px rgba(0,0,0,.45); backdrop-filter: blur(18px); }
+    .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+    .card { padding:14px; border-radius:18px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1); color:#e5e7eb; }
+    .card b { display:block; font-size:26px; margin-top:4px; color:white; }
+    .bank-panel { margin-bottom:18px; padding:18px; border-radius:24px; background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(16,185,129,.08)); border:1px solid rgba(34,197,94,.25); box-shadow:0 0 24px rgba(34,197,94,.14); }
+    .bank-title { font-size:24px; font-weight:950; margin-bottom:14px; }
+    .controls { display:flex; gap:10px; flex-wrap:wrap; margin:16px 0; align-items:center; }
+    input,button { border:0; outline:none; border-radius:999px; padding:12px 16px; font-weight:900; }
+    input { background:rgba(255,255,255,.09); color:white; min-width:170px; }
+    button { cursor:pointer; color:white; background:linear-gradient(135deg,#f97316,#ef4444); box-shadow:0 12px 32px rgba(239,68,68,.24); transition:transform .2s, filter .2s; }
+    button:hover { transform:translateY(-2px); filter:brightness(1.08); }
+    button:disabled { opacity:.55; cursor:not-allowed; transform:none; }
+    .status { padding:12px 14px; border-radius:16px; background:rgba(255,255,255,.06); color:#cbd5e1; margin:10px 0 16px; border:1px solid rgba(255,255,255,.1); }
+    .chart-wrap { height:280px; padding:14px; border-radius:20px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.09); margin-bottom:16px; }
+    canvas { width:100%; height:100%; display:block; }
+    .table-wrap { overflow-x:auto; border-radius:18px; }
+    table { width:100%; min-width:920px; border-collapse:collapse; }
+    th,td { padding:12px; text-align:left; border-bottom:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.045); }
+    th { color:#bfdbfe; background:rgba(59,130,246,.16); text-transform:uppercase; font-size:12px; letter-spacing:.5px; }
+    .win { color:#86efac; font-weight:950; }
+    .lose { color:#fca5a5; font-weight:950; }
+    a { color:#93c5fd; font-weight:900; }
+    .empty { padding:36px 20px; text-align:center; color:#cbd5e1; border:1px dashed rgba(255,255,255,.18); border-radius:22px; }
+    .small { color:#94a3b8; font-size:13px; line-height:1.5; }
+    @media(max-width:760px){ .grid{grid-template-columns:1fr;} h1{letter-spacing:-2px;} input{width:100%;} button{width:100%;} }
+  </style>
+</head>
+<body>
+  <div class="arena"></div>
+  <header>
+    <div class="badge"><span class="dot"></span> VERCEL LIVE</div>
+    <h1>Бот UWU 3.0</h1>
+    <div class="subtitle">API-SPORTS Basketball • IPBL Prime ТБ55 + Pro ТБ38.5</div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <div class="card">Сервер<b id="serverState">Проверка</b></div>
+      <div class="card">API-key<b id="feedState">—</b></div>
+      <div class="card">Ставок<b id="betsCount">0</b></div>
+      <div class="card">Финальный банк<b id="finalBank">10 000 ₽</b></div>
+    </div>
+
+    <section class="bank-panel">
+      <div class="bank-title">Скан итогов предыдущих дней</div>
+      <div class="small">Выбери дату и банк. Сайт запросит Vercel endpoint <b>/api/results-scan</b>, построит график и симуляцию ставки 500 ₽.</div>
+      <div class="controls">
+        <input id="bankInput" type="number" value="10000" min="0" placeholder="Банк" />
+        <input id="dateInput" type="date" />
+        <button id="healthBtn" type="button">Проверить API</button>
+        <button id="scanBtn" type="button">Сканировать результаты</button>
+        <button id="leaguesBtn" type="button">Проверить IPBL в API</button>
+      </div>
+      <div id="status" class="status">Проверяю Vercel API...</div>
+    </section>
+
+    <div class="chart-wrap"><canvas id="chart" width="900" height="280"></canvas></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Время</th><th>Лига</th><th>Команды</th><th>Четверть</th><th>Счёт четверти</th><th>Тотал</th><th>Кэф</th><th>Итог</th><th>Банк после</th><th>Источник</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"><tr><td colspan="10"><div class="empty">Результаты появятся после скана.</div></td></tr></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    const els = {
+      serverState: document.getElementById('serverState'),
+      feedState: document.getElementById('feedState'),
+      betsCount: document.getElementById('betsCount'),
+      finalBank: document.getElementById('finalBank'),
+      bankInput: document.getElementById('bankInput'),
+      dateInput: document.getElementById('dateInput'),
+      healthBtn: document.getElementById('healthBtn'),
+      scanBtn: document.getElementById('scanBtn'),
+      leaguesBtn: document.getElementById('leaguesBtn'),
+      status: document.getElementById('status'),
+      chart: document.getElementById('chart'),
+      tbody: document.getElementById('tbody'),
+    };
+
+    els.dateInput.value = new Date().toISOString().slice(0, 10);
+
+    function escapeHtml(value) {
+      return String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+    }
+
+    function calcSimulation(rows) {
+      let bank = Number(els.bankInput.value || 0);
+      return rows.map((row) => {
+        const odds = Math.min(2, Math.max(1.75, Number(row.odds || 1.75)));
+        const profit = row.passed ? Math.round(500 * (odds - 1)) : -500;
+        bank += profit;
+        return { ...row, odds, profit, bankAfter: bank };
+      });
+    }
+
+    function drawChart(rows) {
+      const ctx = els.chart.getContext('2d');
+      const w = els.chart.width;
+      const h = els.chart.height;
+      ctx.clearRect(0,0,w,h);
+      const items = [1,2,3].map((q) => {
+        const list = rows.filter((r) => Number(r.quarter) === q);
+        return { q, win: list.filter((r) => r.passed).length, lose: list.filter((r) => !r.passed).length };
+      });
+      const max = Math.max(1, ...items.flatMap((x) => [x.win, x.lose]));
+      ctx.fillStyle = 'rgba(255,255,255,.92)';
+      ctx.font = 'bold 18px Arial';
+      ctx.fillText('Пробитие тотала по четвертям', 18, 26);
+      const bottom = h - 42;
+      const top = 46;
+      const group = w / 3;
+      items.forEach((x, i) => {
+        const cx = group * i + group / 2;
+        const wh = (x.win / max) * (bottom - top);
+        const lh = (x.lose / max) * (bottom - top);
+        ctx.fillStyle = 'rgba(34,197,94,.85)';
+        ctx.fillRect(cx - 64, bottom - wh, 52, wh);
+        ctx.fillStyle = 'rgba(239,68,68,.85)';
+        ctx.fillRect(cx + 12, bottom - lh, 52, lh);
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText(String(x.win), cx - 47, bottom - wh - 8);
+        ctx.fillText(String(x.lose), cx + 29, bottom - lh - 8);
+        ctx.fillStyle = 'rgba(255,255,255,.75)';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(x.q + ' четверть', cx - 42, h - 14);
+      });
+    }
+
+    function renderRows(rows) {
+      els.betsCount.textContent = rows.length;
+      els.finalBank.textContent = rows.length ? rows[rows.length - 1].bankAfter.toLocaleString('ru-RU') + ' ₽' : Number(els.bankInput.value || 0).toLocaleString('ru-RU') + ' ₽';
+      if (!rows.length) {
+        els.tbody.innerHTML = '<tr><td colspan="10"><div class="empty">API ответил, но подходящих IPBL Prime/Pro матчей по этой дате не найдено.</div></td></tr>';
+        drawChart([]);
+        return;
+      }
+      els.tbody.innerHTML = rows.map((r) => `
+        <tr>
+          <td>${escapeHtml(r.time || '—')}</td>
+          <td>${escapeHtml(r.league || '—')}</td>
+          <td>${escapeHtml(r.teamA || '—')} — ${escapeHtml(r.teamB || '—')}</td>
+          <td>${escapeHtml(r.quarter)}</td>
+          <td>${escapeHtml(r.qScore)} (${escapeHtml(r.qTotal)})</td>
+          <td>${escapeHtml(r.target)}</td>
+          <td>${escapeHtml(r.odds)}</td>
+          <td class="${r.passed ? 'win' : 'lose'}">${r.profit > 0 ? '+' : ''}${escapeHtml(r.profit)} ₽</td>
+          <td>${escapeHtml(r.bankAfter.toLocaleString('ru-RU'))} ₽</td>
+          <td><a href="${escapeHtml(r.sourceUrl || 'https://betcity.ru/')}" target="_blank" rel="noopener">Открыть</a></td>
+        </tr>
+      `).join('');
+      drawChart(rows);
+    }
+
+    async function checkHealth() {
+      try {
+        els.status.textContent = 'Проверяю Vercel API...';
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        els.serverState.textContent = data.ok ? 'Онлайн' : 'Ошибка';
+        els.feedState.textContent = data.resultsFeedConnected ? 'Есть' : 'Нет';
+        els.status.textContent = data.resultsFeedConnected
+          ? 'API работает, ключ подключён. Можно сканировать.'
+          : 'API работает, но переменная API_SPORTS_KEY не задана в Vercel Environment Variables.';
+      } catch (e) {
+        els.serverState.textContent = 'Ошибка';
+        els.status.textContent = 'Vercel API не отвечает: ' + e.message;
+      }
+    }
+
+    async function scanResults() {
+      try {
+        els.scanBtn.disabled = true;
+        els.scanBtn.textContent = 'Сканирую...';
+        els.status.textContent = 'Запрашиваю API-SPORTS...';
+        const date = els.dateInput.value;
+        const res = await fetch('/api/results-scan?date=' + encodeURIComponent(date));
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Ошибка endpoint');
+        const rows = calcSimulation(data.results || []);
+        renderRows(rows);
+        els.status.textContent = data.note || ('Готово. Найдено строк: ' + rows.length);
+      } catch (e) {
+        els.status.textContent = e.message;
+        els.tbody.innerHTML = '<tr><td colspan="10"><div class="empty">' + escapeHtml(e.message) + '</div></td></tr>';
+        drawChart([]);
+      } finally {
+        els.scanBtn.disabled = false;
+        els.scanBtn.textContent = 'Сканировать результаты';
+      }
+    }
+
+    async function checkLeagues() {
+      try {
+        els.status.textContent = 'Ищу IPBL в API-SPORTS...';
+        const res = await fetch('/api/leagues-search?q=ipbl');
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Ошибка поиска лиг');
+        els.status.textContent = 'Поиск IPBL: найдено лиг = ' + data.count + '. Подробности смотри в консоли браузера.';
+        console.log('IPBL leagues:', data.leagues);
+      } catch (e) {
+        els.status.textContent = e.message;
+      }
+    }
+
+    els.healthBtn.addEventListener('click', checkHealth);
+    els.scanBtn.addEventListener('click', scanResults);
+    els.leaguesBtn.addEventListener('click', checkLeagues);
+    checkHealth();
+  </script>
+</body>
+</html>

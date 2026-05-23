@@ -1,1 +1,16 @@
-{"name":"bot-uwu-3-api-sport-ru","version":"1.0.0","private":true,"type":"module","dependencies":{}}
+{
+  "name": "bot-uwu-3-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bot UWU 3.0 Vercel site with API-SPORTS serverless endpoints",
+  "scripts": {
+    "start": "vercel dev",
+    "check": "node --check api/health.js && node --check api/results-scan.js && node --check api/leagues-search.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "vercel": "latest"
+  }
+}

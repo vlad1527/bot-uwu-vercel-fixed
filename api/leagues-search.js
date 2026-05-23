@@ -1,12 +1,13 @@
-import { apiSportGet } from './_lib.js';
+const { apiSportsGet } = require('./_shared');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
   try {
     const q = String(req.query.q || 'ipbl').trim();
-    const { data, authTried } = await apiSportGet('/basketball/matches', { search: q });
-    const items = Array.isArray(data) ? data : data.matches || data.events || data.data || data.response || [];
-    res.status(200).json({ ok: true, query: q, count: items.length, authTried, leagues: items.slice(0, 50) });
+    const leagues = await apiSportsGet('/leagues', { search: q });
+    res.status(200).json({ ok: true, query: q, count: leagues.length, leagues });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(error.statusCode || 500).json({ ok: false, error: error.message });
   }
-}
+};
