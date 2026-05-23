@@ -1,13 +1,4 @@
-module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.status(200).json({
-    ok: true,
-    server: 'Bot UWU 3.0 Vercel API',
-    provider: 'API-SPORTS Basketball',
-    resultsFeedConnected: Boolean(process.env.API_SPORTS_KEY),
-    endpoints: [
-      '/api/results-scan?date=YYYY-MM-DD',
-      '/api/leagues-search?q=ipbl',
-    ],
-  });
+const {getApiKey} = require('./_lib/apiSport');
+module.exports = async (req, res) => {
+  res.status(200).json({ok:true, provider:'api-sport.ru', finalBuild:'calculated-no-apisports-io', apiKeyConnected:Boolean(getApiKey()), requiredEnv:'API_SPORT_KEY'});
 };

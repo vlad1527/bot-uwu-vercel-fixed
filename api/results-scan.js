@@ -1,36 +1,20 @@
-const { apiSportsGet, gameToRows } = require('./_shared');
-
-async function scanResultsFromApiSports(date) {
-  const games = await apiSportsGet('/games', { date });
-  return games.flatMap(gameToRows);
-}
-
-module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-
+const {fetchMatchesByDate, normalizeMatch, aggregate} = require('./_lib/apiSport');
+module.exports = async (req, res) => {
   try {
     const date = String(req.query.date || '').trim();
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return res.status(400).json({
-        ok: false,
-        error: 'Передайте дату в формате YYYY-MM-DD: /api/results-scan?date=2026-05-23',
-      });
-    }
-
-    const results = await scanResultsFromApiSports(date);
-
+    const bank = Number(req.query.bank || 10000) || 10000;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ok:false,error:'Дата должна быть YYYY-MM-DD'});
+    const loaded = await fetchMatchesByDate(date);
+    const normalizedAll = (loaded.raw || []).map(normalizeMatch).filter(Boolean);
+    const report = aggregate(normalizedAll, bank);
     res.status(200).json({
-      ok: true,
+      ok:true,
+      provider:'api-sport.ru',
       date,
-      source: 'API-SPORTS Basketball',
-      count: results.length,
-      results,
-      note: results.length
-        ? 'Найдены подходящие строки по лигам/командам.'
-        : 'API ответил, но подходящих IPBL Prime/Pro матчей по этой дате не найдено. Проверьте /api/leagues-search?q=ipbl.',
+      usedQuery: loaded.query,
+      rawMatchesCount: loaded.rawCount || (loaded.raw||[]).length,
+      targetMatchesCount: report.matchesCount,
+      ...report
     });
-  } catch (error) {
-    res.status(error.statusCode || 500).json({ ok: false, error: error.message });
-  }
+  } catch (e) { res.status(500).json({ok:false, error:e.message, provider:'api-sport.ru'}); }
 };
